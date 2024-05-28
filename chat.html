@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Room</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f4f4f4;
+    }
+    #chat-container {
+        width: 80%;
+        max-width: 600px;
+        background: white;
+        padding: 20px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    #messages {
+        height: 300px;
+        overflow-y: scroll;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    input[type="text"], #userInfo {
+        width: calc(100% - 22px);
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    button {
+        width: 100%;
+        background: #007BFF;
+        color: white;
+        border: none;
+        padding: 10px;
+    }
+</style>
+</head>
+<body>
+<div id="chat-container">
+    <h2 id="userInfo"></h2>
+    <div id="messages"></div>
+    <input type="text" id="message" placeholder="Enter message...">
+    <button id="send">Send</button>
+</div>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const username = urlParams.get('username');
+    const room = urlParams.get('room');
+    const userInfo = document.getElementById('userInfo');
+    userInfo.textContent = `Username: ${username}  -  Room: ${room}`;
+
+    let socket = null;
+
+    function connectToChat() {
+        socket = new WebSocket(`ws://localhost:8080/ws?username=${encodeURIComponent(username)}&room=${encodeURIComponent(room)}`);
+        socket.onopen = function() {
+            console.log("Connected to the chat server");
+        };
+
+        socket.onmessage = function(event) {
+            const messageData = event.data;
+            const messageElement = document.createElement('div');
+            messageElement.textContent = messageData;
+            document.getElementById('messages').appendChild(messageElement);
+        };
+
+        socket.onclose = function(event) {
+            if (event.wasClean) {
+                console.log(`Connection closed cleanly, code=${event.code}, reason=${event.reason}`);
+            } else {
+                console.log('Connection died');
+            }
+        };
+
+        socket.onerror = function(error) {
+            console.error(`[WebSocket error] ${error.message}`);
+        };
+
+        document.getElementById('send').onclick = function() {
+            const message = document.getElementById('message').value;
+            socket.send(message);
+            document.getElementById('message').value = '';
+        };
+
+        document.getElementById('message').onkeypress = function(e) {
+            if (e.keyCode === 13) {  // enter, return
+                document.getElementById('send').click();
+            }
+        };
+    }
+    connectToChat();
+</script>
+</body>
+</html>
