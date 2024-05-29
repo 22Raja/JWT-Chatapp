@@ -93,7 +93,7 @@
                 }
             }).then(data => {
                 document.cookie = `token=${data.token}; path=/`;
-                window.location.href = `chat.html?username=${encodeURIComponent(username)}&room=${encodeURIComponent(room)}`;
+                window.location.href = `chat.html?username=${encodeURIComponent(username)}&room=${encodeURIComponent(room)}&token=${encodeURIComponent(data.token)}`;
             }).catch(error => {
                 alert(error.message);
             });
