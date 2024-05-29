@@ -142,10 +142,22 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
 }
-
 func handleConnections(w http.ResponseWriter, r *http.Request) {
+	// Get the token from the query parameters
+	tokenString := r.URL.Query().Get("token")
+
+	// Parse and validate the token
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	if err != nil || !token.Valid {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
 	// Get username and room from the query parameters
-	username := r.URL.Query().Get("username")
+	username := claims.Username
 	room := r.URL.Query().Get("room")
 
 	// Upgrade the HTTP server connection to the WebSocket protocol
@@ -162,8 +174,6 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 		clients[room] = append(clients[room], conn)
 	}
 
-	fmt.Println(clients)
-
 	fmt.Printf("%s joined %s\n", username, room)
 
 	for {
@@ -177,6 +187,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 		broadcast <- Message{Username: username, Message: string(message), Room: room}
 	}
 }
+
 func handleMessages() {
 	for {
 		msg := <-broadcast
