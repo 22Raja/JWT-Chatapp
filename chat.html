@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -55,13 +56,20 @@
     const urlParams = new URLSearchParams(window.location.search);
     const username = urlParams.get('username');
     const room = urlParams.get('room');
+    const token = urlParams.get('token');
+
+    if (!token) {
+        alert("Token not found. Please login again.");
+        window.location.href = 'index.html'; // Redirect to login page
+    }
+
     const userInfo = document.getElementById('userInfo');
     userInfo.textContent = `Username: ${username}  -  Room: ${room}`;
 
     let socket = null;
 
     function connectToChat() {
-        socket = new WebSocket(`ws://localhost:8080/ws?username=${encodeURIComponent(username)}&room=${encodeURIComponent(room)}`);
+        socket = new WebSocket(`ws://localhost:8080/ws?username=${encodeURIComponent(username)}&room=${encodeURIComponent(room)}&token=${encodeURIComponent(token)}`);
         socket.onopen = function() {
             console.log("Connected to the chat server");
         };
